@@ -1,0 +1,6 @@
+db.customer.find().pretty()
+db.repairDatabase()
+db.customer.find().pretty()
+show collections
+use tesodev
+show dbs
