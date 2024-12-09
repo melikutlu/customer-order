@@ -32,19 +32,20 @@ type Handler struct {
 // @in header
 // @name Authorization
 
-func NewHandler(e *echo.Echo, service *Service) {
-	handler := &Handler{service: service, validate: validator.New()}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service, validate: validator.New()}
+}
 
+func (h *Handler) Route(e *echo.Echo) {
 	g := e.Group("/customer")
-	g.GET("/:id", handler.GetByID)
-	g.POST("/", handler.Create)
-	g.PUT("/:id", handler.Update)
-	g.PATCH("/:id", handler.PartialUpdate)
-	g.DELETE("/:id", handler.Delete)
-
-	e.GET("/customers", handler.GetCustomersByFilter)
-	e.POST("/login", handler.Login)
-	e.GET("/verify", handler.Verify)
+	g.GET("/:id", h.GetByID)
+	g.POST("/", h.Create)
+	g.PUT("/:id", h.Update)
+	g.PATCH("/:id", h.PartialUpdate)
+	g.DELETE("/:id", h.Delete)
+	e.GET("/customers", h.GetCustomersByFilter)
+	e.POST("/login", h.Login)
+	e.GET("/verify", h.Verify)
 }
 
 // Login handles user authentication and returns a JWT token.
@@ -81,9 +82,8 @@ func (h *Handler) Login(c echo.Context) error {
 	}
 	result.Token = authentication.JwtGenerator(result.Id, result.FirstName, result.LastName, "secret")
 
-	resp := c.JSON(http.StatusOK, result.Token)
 	log.Info("Status Ok")
-	return resp
+	return c.JSON(http.StatusOK, result.Token)
 }
 
 // Verify validates the JWT token and checks if the user exists.
@@ -124,7 +124,7 @@ func (h *Handler) Verify(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Customer not found"})
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "Token verified and user exists"})
+	return c.NoContent(http.StatusOK)
 }
 
 // GetByID retrieves a customer by their ID.

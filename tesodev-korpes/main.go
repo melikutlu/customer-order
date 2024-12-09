@@ -26,13 +26,13 @@ func main() {
 
 	dbConf := config.GetDBConfig("dev")
 
-	client1, err := pkg.GetMongoClient(dbConf.MongoDuration, dbConf.MongoClientURI)
+	mongoClient, err := pkg.GetMongoClient(dbConf.MongoDuration, dbConf.MongoClientURI)
 	if err != nil {
 		fmt.Println(err.Error())
 		panic(err)
 	}
 
-	h_client := client.NewCustomerClient(pkg.NewRestClient())
+	hClient := client.NewCustomerClient(pkg.NewRestClient())
 	consumerClient := clientConsumer.NewConsumerClient(pkg.NewRestClient())
 
 	e := echo.New()
@@ -43,7 +43,7 @@ func main() {
 	e.Use(pkg.Authenticate)
 
 	brokers := []string{"kafka:9092"}
-	topic := "your_topic_name"
+	topic := "product_price_change_events"
 
 	kafkaProducer := producer.NewProducer(brokers, topic)
 
@@ -59,15 +59,16 @@ func main() {
 
 	switch input {
 	case "customer":
-		cmd.BootCustomerService(client1, e)
+		cmd.BootCustomerService(mongoClient, e)
 	case "order":
-		orderCmd.BootOrderService(client1, h_client, kafkaProducer, e)
+		orderCmd.BootOrderService(mongoClient, hClient, kafkaProducer, e)
 	case "consumer":
-		go consumerCmd.BootConsumerService(client1, kafkaConsumer, consumerClient, e, brokers, topic)
+		go consumerCmd.BootConsumerService(mongoClient, kafkaConsumer, consumerClient, e, brokers, topic)
 	case "both":
-		go cmd.BootCustomerService(client1, e)
-		go orderCmd.BootOrderService(client1, h_client, kafkaProducer, e)
-		go consumerCmd.BootConsumerService(client1, kafkaConsumer, consumerClient, e, brokers, topic)
+
+		go cmd.BootCustomerService(mongoClient, e)
+		go orderCmd.BootOrderService(mongoClient, hClient, kafkaProducer, e)
+		go consumerCmd.BootConsumerService(mongoClient, kafkaConsumer, consumerClient, e, brokers, topic)
 	default:
 		panic("Invalid input. Use 'customer', 'order', or 'both'.")
 	}
@@ -79,4 +80,9 @@ func main() {
 	kafkaProducer.Close()
 
 	fmt.Println("Kafka connections closed. Exiting.")
+
+	i := 0
+	for i < 5 {
+		i++
+	}
 }

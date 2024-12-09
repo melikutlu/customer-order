@@ -47,7 +47,12 @@ func (r *Repository) Create(ctx context.Context, customer *types.Customer) (*mon
 
 func (r *Repository) Update(ctx context.Context, id string, customer *types.Customer) error {
 	filter := bson.D{{"_id", id}}
-	update := bson.M{"$set": customer}
+	update := bson.M{
+		"$set": bson.M{
+			"first_name": customer.FirstName,
+			"last_name":  customer.LastName,
+		},
+	}
 	_, err := r.collection.UpdateOne(ctx, filter, update)
 	return err
 }
