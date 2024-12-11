@@ -69,13 +69,15 @@ func (s *Service) Create(ctx context.Context, customerRequestModel types.Custome
 
 func (s *Service) Update(ctx context.Context, id string, customerUpdateModel *types.CustomerUpdateModel) error {
 
-	customer, err := s.repo.FindByID(ctx, id)
+	_, err := s.repo.FindByID(ctx, id)
 
 	now := time.Now().Local()
 
 	if err != nil {
 		return err
 	}
+
+	customer := new(types.Customer)
 
 	customer.FirstName = customerUpdateModel.FirstName
 	customer.LastName = customerUpdateModel.LastName
